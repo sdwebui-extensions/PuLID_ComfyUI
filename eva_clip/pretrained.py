@@ -296,6 +296,8 @@ def download_pretrained_from_hf(
         revision=None,
         cache_dir: Union[str, None] = None,
 ):
+    if os.path.exists(os.path.join("/stable-diffusion-cache/models/clip", filename)):
+        return os.path.join("/stable-diffusion-cache/models/clip", filename)
     has_hf_hub(True)
     cached_file = hf_hub_download(model_id, filename, revision=revision, cache_dir=cache_dir)
     return cached_file
