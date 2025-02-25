@@ -6,14 +6,7 @@ import os
 import math
 import folder_paths
 import comfy.utils
-from insightface.app import FaceAnalysis
-from facexlib.parsing import init_parsing_model
-from facexlib.utils.face_restoration_helper import FaceRestoreHelper
 from comfy.ldm.modules.attention import optimized_attention
-
-from .eva_clip.constants import OPENAI_DATASET_MEAN, OPENAI_DATASET_STD
-
-from .encoders import IDEncoder
 
 INSIGHTFACE_DIR = os.path.join(folder_paths.models_dir, "insightface")
 if os.path.exists("/stable-diffusion-cache/models/insightface"):
@@ -38,6 +31,7 @@ class PulidModel(nn.Module):
         self.ip_layers = To_KV(model["ip_adapter"])
     
     def init_id_adapter(self):
+        from .encoders import IDEncoder
         image_proj_model = IDEncoder()
         return image_proj_model
 
@@ -241,6 +235,7 @@ class PulidInsightFaceLoader:
     CATEGORY = "pulid"
 
     def load_insightface(self, provider):
+        from insightface.app import FaceAnalysis
         model = FaceAnalysis(name="antelopev2", root=INSIGHTFACE_DIR, providers=[provider + 'ExecutionProvider',]) # alternative to buffalo_l
         model.prepare(ctx_id=0, det_size=(640, 640))
 
@@ -259,6 +254,7 @@ class PulidEvaClipLoader:
 
     def load_eva_clip(self):
         from .eva_clip.factory import create_model_and_transforms
+        from .eva_clip.constants import OPENAI_DATASET_MEAN, OPENAI_DATASET_STD
 
         model, _, _ = create_model_and_transforms('EVA02-CLIP-L-14-336', 'eva_clip', force_custom_clip=True)
 
@@ -299,6 +295,8 @@ class ApplyPulid:
     CATEGORY = "pulid"
 
     def apply_pulid(self, model, pulid, eva_clip, face_analysis, image, weight, start_at, end_at, method=None, noise=0.0, fidelity=None, projection=None, attn_mask=None):
+        from facexlib.parsing import init_parsing_model
+        from facexlib.utils.face_restoration_helper import FaceRestoreHelper
         work_model = model.clone()
         
         device = comfy.model_management.get_torch_device()
